@@ -1,6 +1,4 @@
 fastapi==0.63.0
-pydub==0.25.1
 slowapi==0.1.4
 uvicorn[standard]==0.13.4
 youtube-dl==2021.3.25
-youtube-search==2.1.0
