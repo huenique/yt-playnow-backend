@@ -1,4 +1,4 @@
-fastapi==0.63.0
-slowapi==0.1.4
-uvicorn[standard]==0.13.4
-youtube-dl==2021.3.25
+fastapi>=0.63.0
+slowapi>=0.1.4
+uvicorn[standard]>=0.13.4
+youtube-dl>=2021.3.25
