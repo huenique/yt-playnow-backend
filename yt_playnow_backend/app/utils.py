@@ -1,5 +1,4 @@
 import os
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from youtube_dl import YoutubeDL
@@ -12,23 +11,21 @@ YOUTUBE_URL = 'https://youtube.com'
 class YoutubeDownloadUtil:
 
     def __init__(self):
-        self.dl_name = None
-        self.dl_size = None
+        self.dl_name = ''
+        self.dl_size = ''
 
     def remove_file(self, path: str) -> None:
         os.unlink(path)
 
-    def get_youtube_video(self, url: str) -> tuple[str]:
-        with ThreadPoolExecutor() as executor:
-            future = executor.submit(self._download_video_ydl, url)
-            return future.result()
+    def get_youtube_video(self, url: str) -> tuple[str, str]:
+        return self._download_video_ydl(url)
 
-    def _download_progess_hook(self, download):
+    def _download_progess_hook(self, download: dict):
         if download['status'] == 'finished':
-            self.dl_size = download['_total_bytes_str']
+            self.dl_size = str(download['_total_bytes_str'])
             self.dl_name = Path(download['filename']).name
 
-    def _download_video_ydl(self, url: str) -> tuple[str]:
+    def _download_video_ydl(self, url: str) -> tuple[str, str]:
         """Downloads a Youtube video as an m4a file.
         """
 
@@ -36,7 +33,6 @@ class YoutubeDownloadUtil:
         # of the separator (&) in the URL.
         if '&list=' in url:
             url = '&'.join(url.split('&')[:1])
-
         ydl_opts = {
             'quiet':
                 True,

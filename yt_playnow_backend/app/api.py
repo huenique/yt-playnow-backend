@@ -9,8 +9,9 @@ from slowapi.util import get_remote_address
 from starlette.background import BackgroundTasks
 from starlette.requests import Request
 
+from .helpers import file_status
 from .schemas import File, FileInResponse, Url
-from .settings import BASE_DIR, MEDIA_ROOT, ORIGINS
+from .settings import ORIGINS
 from .utils import YoutubeDownloadUtil
 
 limiter = Limiter(key_func=get_remote_address)
@@ -37,19 +38,14 @@ ydl = YoutubeDownloadUtil()
 @limiter.limit("5/minute")
 async def download_file(file_name: File, request: Request,
                         background_tasks: BackgroundTasks) -> FileResponse:
-    file_name = str(dict(file_name).get('name'))
-    fpath = os.path.join(*f'{BASE_DIR},{MEDIA_ROOT},{file_name}'.split(','))
-    if os.path.isfile(fpath):
-        background_tasks.add_task(ydl.remove_file, fpath)
-        return FileResponse(fpath)
-    raise HTTPException(status_code=400)
+    return FileResponse(file_status(file_name, ydl, background_tasks))
 
 
 @app.post('/collect', response_model=FileInResponse)
 @limiter.limit("5/minute")
 async def collect_file(url: Url, request: Request) -> FileInResponse:
     try:
-        name, size = ydl.get_youtube_video(dict(url).get('url'))
-    except Exception as exception:
-        raise HTTPException(status_code=500, detail=str(exception))
+        name, size = ydl.get_youtube_video(str(dict(url).get('url')))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     return FileInResponse(name=name, size=size)
