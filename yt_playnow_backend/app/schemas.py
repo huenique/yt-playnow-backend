@@ -1,8 +1,11 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
-class Url(BaseModel):
+class Payload(BaseModel):
     url: str
+    term: Optional[str] = None
 
 
 class File(BaseModel):

@@ -8,7 +8,7 @@ from starlette.background import BackgroundTasks
 from starlette.requests import Request
 
 from .helpers import file_state
-from .schemas import File, FileInResponse, Url
+from .schemas import File, FileInResponse, Payload
 from .settings import ORIGINS
 from .utils import YoutubeDownloadUtil
 
@@ -34,8 +34,8 @@ ydl = YoutubeDownloadUtil()
 
 @app.post('/download')
 @limiter.limit("5/minute")
-async def download_file(file_name: File, request: Request,
-                        background_tasks: BackgroundTasks) -> FileResponse:
+async def download(file_name: File, request: Request,
+                   background_tasks: BackgroundTasks) -> FileResponse:
     try:
         f = await file_state(file_name, ydl, background_tasks)
         return FileResponse(f)
@@ -45,11 +45,18 @@ async def download_file(file_name: File, request: Request,
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post('/collect', response_model=FileInResponse)
+@app.post('/save', response_model=FileInResponse)
 @limiter.limit("5/minute")
-async def collect_file(url: Url, request: Request) -> FileInResponse:
+async def save(data: Payload, request: Request) -> FileInResponse:
     try:
-        fn, fs = await ydl.get_youtube_video(str(dict(url).get('url')))
+        fn, fs = await ydl.save_video(data.url)
         return FileInResponse(name=fn, size=fs)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post('/search')
+@limiter.limit("5/minute")
+async def search(data: Payload, request: Request):
+    t = await ydl.search_video(data.url)
+    return {'title': t}
